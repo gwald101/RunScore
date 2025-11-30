@@ -7,7 +7,11 @@ class StravaService:
     def __init__(self):
         self.client_id = os.getenv('STRAVA_CLIENT_ID')
         self.client_secret = os.getenv('STRAVA_CLIENT_SECRET')
-        self.redirect_uri = 'http://localhost:8000/strava/callback/'
+        domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+        if domain:
+            self.redirect_uri = f'https://{domain}/strava/callback/'
+        else:
+            self.redirect_uri = 'http://localhost:8000/strava/callback/'
 
     def get_authorization_url(self):
         params = {
