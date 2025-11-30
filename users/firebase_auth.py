@@ -12,6 +12,22 @@ except ImportError:
 def initialize_firebase():
     """Initialize Firebase Admin SDK with service account credentials."""
     if not firebase_admin._apps:
+        # Option 1: Load from JSON string in environment variable (Best for Railway/Heroku)
+        firebase_creds_json = os.getenv('FIREBASE_CREDENTIALS_JSON')
+        if firebase_creds_json:
+            import json
+            try:
+                creds_dict = json.loads(firebase_creds_json)
+                cred = credentials.Certificate(creds_dict)
+                firebase_admin.initialize_app(cred)
+                print("Initialized Firebase using FIREBASE_CREDENTIALS_JSON")
+                return
+            except json.JSONDecodeError as e:
+                print(f"Error decoding FIREBASE_CREDENTIALS_JSON: {e}")
+            except Exception as e:
+                print(f"Error initializing Firebase from JSON string: {e}")
+
+        # Option 2: Load from file path
         cred_filename = os.getenv('FIREBASE_ADMIN_CREDENTIALS')
         
         # If not in env, try to find the Firebase JSON file in the project root
@@ -22,9 +38,15 @@ def initialize_firebase():
                 cred_path = firebase_json_files[0]
                 print(f"Using Firebase credentials file: {cred_path}")
             else:
+                # If we're here, we failed to find credentials
+                # Only raise error if we really need them (e.g. not during build)
+                if os.getenv('RAILWAY_ENVIRONMENT'):
+                     print("WARNING: Firebase credentials not found. Authentication will fail.")
+                     return
+                
                 raise FileNotFoundError(
                     "Firebase credentials file not found. "
-                    "Please add FIREBASE_ADMIN_CREDENTIALS to .env or place the Firebase JSON file in the project root."
+                    "Please add FIREBASE_CREDENTIALS_JSON (content) or FIREBASE_ADMIN_CREDENTIALS (path) to .env"
                 )
         else:
             cred_path = os.path.join(settings.BASE_DIR, cred_filename)
