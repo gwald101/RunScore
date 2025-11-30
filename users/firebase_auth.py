@@ -14,6 +14,14 @@ def initialize_firebase():
     if not firebase_admin._apps:
         # Option 1: Load from JSON string in environment variable (Best for Railway/Heroku)
         firebase_creds_json = os.getenv('FIREBASE_CREDENTIALS_JSON')
+        
+        # DEBUG LOGGING
+        if firebase_creds_json:
+            print(f"DEBUG: Found FIREBASE_CREDENTIALS_JSON. Length: {len(firebase_creds_json)}")
+            print(f"DEBUG: First 20 chars: {firebase_creds_json[:20]}")
+        else:
+            print("DEBUG: FIREBASE_CREDENTIALS_JSON not found in environment.")
+
         if firebase_creds_json:
             import json
             try:
@@ -26,9 +34,12 @@ def initialize_firebase():
                 print(f"Error decoding FIREBASE_CREDENTIALS_JSON: {e}")
             except Exception as e:
                 print(f"Error initializing Firebase from JSON string: {e}")
+                import traceback
+                traceback.print_exc()
 
         # Option 2: Load from file path
         cred_filename = os.getenv('FIREBASE_ADMIN_CREDENTIALS')
+        print(f"DEBUG: FIREBASE_ADMIN_CREDENTIALS env var: {cred_filename}")
         
         # If not in env, try to find the Firebase JSON file in the project root
         if not cred_filename:
@@ -73,9 +84,12 @@ def verify_firebase_token(id_token):
         ValueError: If token is invalid
     """
     try:
+        print(f"Verifying token: {id_token[:20]}...")
         decoded_token = auth.verify_id_token(id_token)
+        print(f"Token verified for UID: {decoded_token.get('uid')}")
         return decoded_token
     except Exception as e:
+        print(f"Token verification failed: {e}")
         raise ValueError(f"Invalid token: {str(e)}")
 
 def get_or_create_user_from_firebase(decoded_token):

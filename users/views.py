@@ -57,8 +57,12 @@ def firebase_auth(request):
         })
         
     except ValueError as e:
+        print(f"ValueError in firebase_auth: {str(e)}")
         return JsonResponse({'error': str(e)}, status=401)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"Unexpected error in firebase_auth: {str(e)}")
         return JsonResponse({'error': 'Authentication failed'}, status=500)
 
 def logout_view(request):
