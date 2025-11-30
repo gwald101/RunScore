@@ -38,6 +38,10 @@ db.sqlite3-journal
 .env.local
 .env.*.local
 
+# Firebase
+*firebase*.json
+firebase-credentials.json
+
 # IDE
 .vscode/
 .idea/

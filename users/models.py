@@ -3,22 +3,23 @@ from django.db import models
 from django.utils import timezone
 
 class UserManager(BaseUserManager):
-    def create_user(self, phone_number, password=None, **extra_fields):
-        if not phone_number:
-            raise ValueError('The Phone Number field must be set')
-        user = self.model(phone_number=phone_number, **extra_fields)
+    def create_user(self, firebase_uid, password=None, **extra_fields):
+        if not firebase_uid:
+            raise ValueError('Firebase UID is required')
+        user = self.model(firebase_uid=firebase_uid, **extra_fields)
         if password:
             user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, phone_number, password=None, **extra_fields):
+    def create_superuser(self, firebase_uid, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        return self.create_user(phone_number, password, **extra_fields)
+        return self.create_user(firebase_uid, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    phone_number = models.CharField(max_length=15, unique=True)
+    firebase_uid = models.CharField(max_length=128, unique=True)
+    phone_number = models.CharField(max_length=15, blank=True)
     email = models.EmailField(blank=True, null=True)
     name = models.CharField(max_length=100, blank=True)
     is_active = models.BooleanField(default=True)
@@ -31,8 +32,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'phone_number'
+    USERNAME_FIELD = 'firebase_uid'
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.name or self.phone_number
+        return self.name or self.email or self.phone_number or self.firebase_uid
