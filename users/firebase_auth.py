@@ -119,7 +119,7 @@ def get_or_create_user_from_firebase(decoded_token):
             firebase_uid=firebase_uid,
             email=email,
             name=name,
-            phone_number=phone or f'firebase_{firebase_uid[:10]}',  # Fallback if no phone
+            phone_number=phone or f'fb_{firebase_uid[:10]}',  # Fallback if no phone (max 15 chars)
         )
     
     return user
