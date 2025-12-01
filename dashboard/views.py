@@ -9,7 +9,14 @@ def index(request):
     from strava_integration.models import MileageLog
     
     user = request.user
-    today = timezone.now().date()
+    
+    # Determine "Current Week" based on Monday 3am rule
+    # We subtract 3 hours from the current time. 
+    # If it's Mon 2am, it becomes Sun 11pm -> Previous Week.
+    # If it's Mon 4am, it becomes Mon 1am -> Current Week.
+    now = timezone.now()
+    adjusted_now = now - timedelta(hours=3)
+    today = adjusted_now.date()
     current_week_start = today - timedelta(days=today.weekday())
     
     # Acute Mileage (Current Week)

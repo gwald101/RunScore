@@ -76,8 +76,17 @@ class StravaService:
                 continue
                 
             # Parse activity date and determine week
+            # Parse activity date and determine week
             from datetime import datetime
-            activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00')).date()
+            # start_date_local is the local time where the run happened. 
+            # We treat it as naive or reference time for the 3am logic.
+            activity_dt = datetime.fromisoformat(activity['start_date_local'].replace('Z', ''))
+            
+            # Adjust for "week starts Monday 3am" rule
+            # Subtracting 3 hours means anything before 3am falls into the previous day (and potentially previous week)
+            adjusted_dt = activity_dt - timedelta(hours=3)
+            
+            activity_date = adjusted_dt.date()
             week_start = activity_date - timedelta(days=activity_date.weekday())
             
             # Convert meters to miles
