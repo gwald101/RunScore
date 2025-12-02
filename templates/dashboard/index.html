@@ -3,99 +3,231 @@
 {% block title %}Dashboard - RunScore{% endblock %}
 
 {% block content %}
-<div class="text-center">
-    <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome{% if user.name %}, {{ user.name }}{% endif %}!</h1>
-    <p class="text-xl text-gray-600 mb-8">Your Critical Score Dashboard</p>
+<div class="space-y-6">
+    <!-- Welcome Header -->
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Dashboard</h1>
+            <p class="text-slate-500">Welcome back, {{ user.name|default:"Runner" }}</p>
+        </div>
+        <div class="text-sm text-slate-400">
+            {{ current_week_range }}
+        </div>
+    </div>
 
-    <div class="bg-white p-6 rounded-lg shadow-md inline-block text-left w-full max-w-2xl">
-        <h2 class="text-2xl font-bold mb-4 text-center">Status</h2>
+    {% if user.strava_refresh_token %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- ACWR Hero Card -->
+        <div class="relative overflow-hidden rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between h-64
+            {% if critical_score < 0.8 %}bg-gradient-to-br from-amber-50 to-white
+            {% elif critical_score <= 1.3 %}bg-gradient-to-br from-emerald-50 to-white
+            {% elif critical_score <= 1.5 %}bg-gradient-to-br from-amber-50 to-white
+            {% else %}bg-gradient-to-br from-rose-50 to-white{% endif %}">
 
-        {% if user.strava_refresh_token %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-gray-50 p-4 rounded shadow-sm text-center relative">
-                <div class="flex justify-center items-center gap-2 mb-1">
-                    <h3 class="text-lg font-semibold text-gray-700">ACWR</h3>
-                    <button onclick="document.getElementById('acwr-info').classList.toggle('hidden')"
-                        class="text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    <!-- Info Popup -->
-                    <div id="acwr-info"
-                        class="hidden absolute top-8 left-1/2 transform -translate-x-1/2 w-64 bg-white border border-gray-200 p-3 rounded shadow-lg z-10 text-sm text-left text-gray-600">
-                        <p><strong>Acute:Chronic Workload Ratio</strong> compares your recent training load (last week)
-                            to your chronic load (last 4 weeks). Keeping this between 0.8 and 1.3 reduces injury risk.
-                        </p>
+            <div class="flex justify-between items-start">
+                <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">ACWR</h3>
+                <button id="acwr-info-toggle" onclick="toggleAcwrInfo()"
+                    class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Info Popup (Absolute) -->
+            <div id="acwr-info"
+                class="hidden absolute top-12 right-6 w-64 bg-white border border-slate-200 p-4 rounded-lg shadow-xl z-20 text-sm text-slate-600">
+                <p class="mb-2"><strong class="text-slate-800">Acute:Chronic Workload Ratio</strong></p>
+                <p>Compares your recent training load (last week) to your chronic load (last 4 weeks).</p>
+                <div class="mt-3 space-y-1 text-xs">
+                    <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span> 0.8 -
+                        1.3: Sweet Spot</div>
+                    <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span> 1.3 -
+                        1.5: Warning</div>
+                    <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-rose-500 mr-2"></span> > 1.5:
+                        Danger Zone</div>
+                </div>
+            </div>
+
+            <div class="text-center my-auto">
+                <span class="font-metric text-7xl font-semibold tracking-tight
+                    {% if critical_score < 0.8 %}text-amber-500
+                    {% elif critical_score <= 1.3 %}text-emerald-500
+                    {% elif critical_score <= 1.5 %}text-amber-500
+                    {% else %}text-rose-500{% endif %}">
+                    {{ critical_score }}
+                </span>
+                <p class="text-slate-400 text-sm mt-2">Current Ratio</p>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-4">
+                <div class="h-1.5 rounded-full 
+                    {% if critical_score < 0.8 %}bg-amber-500 w-[40%]
+                    {% elif critical_score <= 1.3 %}bg-emerald-500 w-[60%]
+                    {% elif critical_score <= 1.5 %}bg-amber-500 w-[80%]
+                    {% else %}bg-rose-500 w-[95%]{% endif %}"></div>
+            </div>
+        </div>
+
+        <!-- Recommended Mileage Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between h-64">
+            <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">Recommended Mileage</h3>
+            <div class="text-center my-auto">
+                <span class="font-metric text-6xl font-semibold text-slate-800 tracking-tight">{{ recommended_capacity
+                    }}</span>
+                <span class="text-xl text-slate-400 font-medium">mi</span>
+                <p class="text-slate-400 text-sm mt-2">Safe Upper Limit (Next Week)</p>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 mt-4 pt-4 border-t border-slate-50">
+                <span>Based on Chronic Load</span>
+                <span>{{ chronic_mileage }} mi avg</span>
+            </div>
+        </div>
+
+        <!-- Current Status / Mileage Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col h-64">
+            <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider mb-6">Current Status</h3>
+
+            <div class="space-y-6 flex-1">
+                <div>
+                    <div class="flex justify-between items-baseline mb-1">
+                        <span class="text-slate-600 font-medium">Acute Load</span>
+                        <span class="text-slate-800 font-bold text-xl">{{ acute_mileage }} <span
+                                class="text-sm font-normal text-slate-400">mi</span></span>
                     </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-slate-800 h-2 rounded-full"
+                            style="width: min(100%, {{ acute_mileage|default:0 }} / {{ recommended_capacity|default:1 }} * 100%)">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">This Week (Last 7 Days)</p>
                 </div>
 
-                <p class="text-4xl font-bold 
-                        {% if critical_score < 1.10 %}text-gray-500
-                        {% elif critical_score <= 1.25 %}text-green-500
-                        {% elif critical_score <= 1.30 %}text-yellow-500
-                        {% else %}text-red-500{% endif %}">
-                    {{ critical_score }}
-                </p>
-                <p class="text-sm text-gray-500 mt-1">Target: 1.10 - 1.25</p>
-            </div>
-
-            <div class="bg-gray-50 p-4 rounded shadow-sm text-center">
-                <h3 class="text-lg font-semibold text-gray-700">Recommended Mileage</h3>
-                <p class="text-4xl font-bold text-blue-500">{{ recommended_capacity }} mi</p>
-                <p class="text-sm text-gray-500 mt-1">For Next Week</p>
+                <div>
+                    <div class="flex justify-between items-baseline mb-1">
+                        <span class="text-slate-600 font-medium">Chronic Load</span>
+                        <span class="text-slate-800 font-bold text-xl">{{ chronic_mileage }} <span
+                                class="text-sm font-normal text-slate-400">mi</span></span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-slate-300 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">4-Week Average</p>
+                </div>
             </div>
         </div>
-
-        <div class="mt-6 border-t pt-4">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Mileage Breakdown</h3>
-            <p class="text-sm text-gray-500 mb-4">Current Week: {{ current_week_range }}</p>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-200">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-600 text-sm leading-normal">
-                            <th class="py-3 px-4 text-left">Week</th>
-                            <th class="py-3 px-4 text-center">Acute (mi)</th>
-                            <th class="py-3 px-4 text-center">Chronic (mi)</th>
-                            <th class="py-3 px-4 text-center">ACWR</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-600 text-sm font-light">
-                        {% for week in historical_data %}
-                        <tr class="border-b border-gray-200 hover:bg-gray-50">
-                            <td class="py-3 px-4 text-left whitespace-nowrap font-medium">{{ week.week_label }}</td>
-                            <td class="py-3 px-4 text-center">{{ week.acute }}</td>
-                            <td class="py-3 px-4 text-center">{{ week.chronic }}</td>
-                            <td class="py-3 px-4 text-center font-bold 
-                                {% if week.acwr != 'N/A' %}
-                                    {% if week.acwr <= 1.25 %}text-green-600
-                                    {% elif week.acwr <= 1.30 %}text-yellow-600
-                                    {% else %}text-red-600{% endif %}
-                                {% endif %}">
-                                {{ week.acwr }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="mt-6 text-center">
-            <p class="text-green-600 font-bold">✓ Strava Connected</p>
-        </div>
-        {% else %}
-        <div class="text-center">
-            <p class="text-gray-700">Connect Strava to get started.</p>
-            <a href="{% url 'strava:connect' %}"
-                class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded mt-4 inline-block">
-                Connect with Strava
-            </a>
-        </div>
-        {% endif %}
     </div>
+
+    <!-- Historical Data Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100">
+            <h3 class="text-slate-800 font-bold text-lg">Training History</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider text-left">
+                        <th class="px-6 py-3 font-medium">Week</th>
+                        <th class="px-6 py-3 font-medium text-right">Acute (mi)</th>
+                        <th class="px-6 py-3 font-medium text-right">Chronic (mi)</th>
+                        <th class="px-6 py-3 font-medium text-center">ACWR</th>
+                        <th class="px-6 py-3 font-medium text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for week in historical_data %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm font-medium text-slate-800 whitespace-nowrap">{{ week.week_label }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 text-right font-metric text-lg">{{ week.acute }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 text-right font-metric text-lg">{{ week.chronic }}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if week.acwr != 'N/A' %}
+                            <span class="font-metric text-lg font-semibold
+                                    {% if week.acwr < 0.8 %}text-amber-500
+                                    {% elif week.acwr <= 1.3 %}text-emerald-500
+                                    {% elif week.acwr <= 1.5 %}text-amber-500
+                                    {% else %}text-rose-500{% endif %}">
+                                {{ week.acwr }}
+                            </span>
+                            {% else %}
+                            <span class="text-slate-300">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if week.acwr != 'N/A' %}
+                            {% if week.acwr < 0.8 %} <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                Low</span>
+                                {% elif week.acwr <= 1.3 %} <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                    Optimal</span>
+                                    {% elif week.acwr <= 1.5 %} <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                        Warning</span>
+                                        {% else %}
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">High
+                                            Risk</span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-slate-300 text-xs">No Data</span>
+                                        {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center max-w-2xl mx-auto mt-12">
+        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-[#FC4C02]" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                    d="M15.387 17.944l-2.089-.726-.541-2.452 4.356-1.815 1.064 2.726 1.936-.726-1.694-3.992-6.17 2.54-1.21-4.718 1.815-1.21-1.089-1.572-2.661 1.694.484 2.177-3.508 2.339-3.387-1.21-1.089 1.572 4.113 1.452 2.661-1.694.54 2.54 3.871 1.331z" />
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Connect with Strava</h2>
+        <p class="text-slate-500 mb-8">Connect your account to automatically calculate your ACWR and minimize injury
+            risk.</p>
+        <a href="{% url 'strava:connect' %}"
+            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[#FC4C02] hover:bg-orange-600 transition-colors shadow-sm">
+            Connect with Strava
+        </a>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+    document.addEventListener('click', function (event) {
+        const infoWidget = document.getElementById('acwr-info');
+        const toggleButton = document.getElementById('acwr-info-toggle');
+
+        if (!infoWidget || !toggleButton) return;
+
+        // If click is inside the widget or on the toggle button, do nothing
+        if (infoWidget.contains(event.target) || toggleButton.contains(event.target)) {
+            return;
+        }
+
+        // Otherwise, hide the widget
+        if (!infoWidget.classList.contains('hidden')) {
+            infoWidget.classList.add('hidden');
+        }
+    });
+
+    function toggleAcwrInfo() {
+        const infoWidget = document.getElementById('acwr-info');
+        if (infoWidget) {
+            infoWidget.classList.toggle('hidden');
+        }
+    }
+</script>
 {% endblock %}
