@@ -129,10 +129,10 @@
             <table class="min-w-full table-fixed">
                 <thead>
                     <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider text-left">
-                        <th class="px-6 py-3 font-medium w-1/3">Week</th>
-                        <th class="px-6 py-3 font-medium text-right w-1/6">Acute (mi)</th>
-                        <th class="px-6 py-3 font-medium text-right w-1/6">Chronic (mi)</th>
-                        <th class="px-6 py-3 font-medium text-center w-1/3">ACWR</th>
+                        <th class="px-6 py-3 font-medium w-2/5">Week</th>
+                        <th class="px-6 py-3 font-medium text-right w-1/5">Acute (mi)</th>
+                        <th class="px-6 py-3 font-medium text-right w-1/5">Chronic (mi)</th>
+                        <th class="px-6 py-3 font-medium text-center w-1/5">ACWR</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -151,7 +151,7 @@
                                     {% elif week.acwr <= 1.3 %}text-emerald-500
                                     {% elif week.acwr <= 1.5 %}text-amber-500
                                     {% else %}text-rose-500{% endif %}">
-                                {{ week.acwr }}
+                                {{ week.acwr|floatformat:2 }}
                             </span>
                             {% else %}
                             <span class="text-slate-300">-</span>
